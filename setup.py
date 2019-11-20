@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pyegctl",
-    version="1.0.0",
+    version="1.0.1",
     author="Michal Drzymala",
     author_email="pzbbole@gmail.com",
     description="Energenie control utility",

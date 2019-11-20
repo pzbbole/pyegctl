@@ -2,7 +2,7 @@
 
 This is a python version of utility egctl published by Vitaly Sinilin.
 
-Original project link: [unterwulf/egctl]("https://github.com/unterwulf/egctl")
+Original project link: https://github.com/unterwulf/egctl
 
 Many thanks to you!
 
@@ -17,7 +17,7 @@ Many thanks to you!
 ```python
 from pyegctl.device import EGV21
 
-pdu = EGV21('192.168.1.111', '5000', password='p4ss')
+pdu = EGV21('192.168.1.111', 5000, password='p4ss')
 
 pdu.set(['on', 'on', 'left', 'toggle'])
 

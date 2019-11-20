@@ -1,5 +1,6 @@
 import socket
 import sys
+from abc import ABCMeta
 from enum import IntEnum, auto
 from collections import namedtuple
 
@@ -15,14 +16,14 @@ def _repeat_until_succeeded(fun, max_repeats, *args):
     raise RuntimeError('Exceeded max repeat count.')
 
 
-class Energenie:
-    def __init__(self, host, port, password, status, max_repeat):
+class Energenie(metaclass=ABCMeta):
+    def __init__(self, host, port, password, protocol, max_repeat):
         Switch = namedtuple('switch', ['on', 'off', 'nop'])
         self._host = host
         self._port = port
         self._key = password.ljust(8).encode()
         self.switch = Switch(on=0x01, off=0x02, nop=0x04)
-        self.status = status
+        self._status = protocol
         self._max_repeat = max_repeat
 
     @staticmethod
@@ -35,7 +36,7 @@ class Energenie:
 
     def status(self):
         raw = _repeat_until_succeeded(self._talk, self._max_repeat)
-        return [self.status[s] for s in raw]
+        return [self._status(s).name for s in raw]
 
     @staticmethod
     def _solve_challenge(ch, key):
@@ -44,10 +45,10 @@ class Energenie:
         return lo + hi
 
     def set(self, status):
-        available = [a.name for a in self.status]
+        available = [a.name for a in self._status]
         assert all((s in available for s in status)), "Available commands: " + str(available)
-        raw = _repeat_until_succeeded(self._talk, self._max_repeat, bytes((self.status[s] for s in status)))
-        return [self.status(s).name for s in raw]
+        raw = _repeat_until_succeeded(self._talk, self._max_repeat, bytes((self._status[s] for s in status)))
+        return [self._status(s).name for s in raw]
 
     def _talk(self, change=None):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -73,14 +74,14 @@ class Energenie:
     def _gen_request(self, desired, current):
         req = []
         for d, c in zip(desired, current):
-            if d == self.status.left or d == c:
+            if d == self._status.left or d == c:
                 req.append(self.switch.nop)
-            elif d == self.status.on:
+            elif d == self._status.on:
                 req.append(self.switch.on)
-            elif d == self.status.off:
+            elif d == self._status.off:
                 req.append(self.switch.off)
             else:  # TOGGLE
-                req.append({self.status.on: self.switch.off, self.status.off: self.switch.on}[c])
+                req.append({self._status.on: self.switch.off, self._status.off: self.switch.on}[c])
         return bytes(req)
 
 
@@ -101,3 +102,6 @@ class EGWLAN(Energenie):
 
 class EGV20(Energenie):
     ...
+
+
+Energenie('123', 50, '2', {}, 5)
